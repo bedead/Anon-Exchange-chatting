@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useRef} from 'react'
 import './App.css'
 import {supabase} from "./supabaseClient";
 import {MyCard, OtherCard} from './components/card';
@@ -10,9 +10,15 @@ function App() {
     const [message, setMessage] = useState({username: "", content: ""});
     const {username, content} = message;
     const [cookies, setCookie] = useCookies(['user']);
+    const messagesContainerRef = useRef(null);
 
-    message.username = cookies.name;
-
+    useEffect(() => {
+        const storedUsername = localStorage.getItem("name") || cookies.name;
+        setMessage((prevMessage) => ({
+            ...prevMessage,
+            username: storedUsername
+        }));
+    }, []);
 
     useEffect(() => {
         const profiles = supabase.channel("*").on("postgres_changes", {
@@ -25,6 +31,7 @@ function App() {
                 ...oldMessages,
                 payload.new
             ]);
+            scrollToBottom();
         }).subscribe();
         return() => {
             profiles.unsubscribe();
@@ -65,28 +72,44 @@ function App() {
     }
 
 
+    const scrollToBottom = () => {
+        if (messagesContainerRef.current) {
+            const container = messagesContainerRef.current;
+            container.scrollTop = container.scrollHeight;
+        }
+    };
+
+    useEffect(() => {
+        scrollToBottom(); // Scroll to bottom after messages update
+    }, [messages]);
+
+
     return (
         <div> {/* component */}
             <div className="bg-cover h-screen flex flex-col justify-center items-center" loading="lazy"
                 style={
-                    {backgroundImage: `url("https://source.unsplash.com/random?dark?aesthetic")`}
+                    {backgroundImage: `url("https://source.unsplash.com/random?dark?aesthetic/1600x900")`}
             }>
-                <h2 className='text-white md:text-3xl sm:text-lg'>Anon Exchange</h2>
+                <h2 className='text-white md:text-3xl text-2xl'>Anon Exchange</h2>
                 {/* card  */}
                 <div className="w-11/12 lg:w-1/3 bg-white my-10 rounded-xl bg-opacity-60 backdrop-filter backdrop-blur-lg">
                     {/* component  */}
                     <div className="flex-1 sm:p-6 justify-between flex flex-col h-[464px] ">
 
                         {/* top header section */}
-                        <div className="flex sm:items-center justify-between border-b-2 pb-3 border-gray-100">
-                            <h1 className=''>Service status :
+                        <div className="flex sm:items-center p-4 md:p-0 justify-between border-b-2 border-gray-100">
+                            <h1 className='pb-3'>Service status :
                                 <span>
                                     🟢 Online</span>
                             </h1>
                         </div>
 
                         {/* message section */}
-                        <div id="messages" className="flex flex-col my-3 space-y-2 p-3 overflow-auto ">
+                        <div id="messages"
+                            ref={messagesContainerRef}
+                            // Set the ref for the messages container
+                            className="flex flex-col my-3 space-y-2 p-3 overflow-auto "
+                        >
 
                             {
                             messages ?. map((message) => ((message.username == cookies.name) ? <MyCard key={
@@ -111,7 +134,8 @@ function App() {
                         {/* bottom buttons and chat section */}
                         <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
                             <div className='relative flex mb-2'>
-                                <input value={
+                                <input required
+                                    value={
                                         (username)
                                     }
                                     onChange={
@@ -122,7 +146,20 @@ function App() {
                                     }
                                     type="text"
                                     placeholder="Username"
-                                    className="focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-5 bg-gray-100 rounded-md py-3"/>
+                                    className="w-1/2 focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-5 bg-gray-100 rounded-md py-3"/>
+                                <div className="absolute right-0 items-center inset-y-0 sm:flex">
+                                    <button type="button"
+                                        onClick={
+                                            () => {
+                                                submit();
+                                                scrollToBottom();
+                                                window.location.reload();
+                                            }
+                                        }
+                                        className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none">
+                                        <span className="font-bold">Set name</span>
+                                    </button>
+                                </div>
                             </div>
                             <div className="relative flex">
                                 {/* <span className="absolute inset-y-0 flex items-center">
@@ -132,7 +169,8 @@ function App() {
                                         </svg>
                                     </button>
                                 </span> */}
-                                <input value={content}
+                                <input required
+                                    value={content}
                                     onChange={
                                         (e) => {
                                             setMessage({
@@ -145,7 +183,7 @@ function App() {
                                     type="text"
                                     placeholder="Write your message!"
                                     className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-5 bg-gray-100 rounded-md py-3"/>
-                                <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
+                                <div className="absolute right-0 items-center inset-y-0 sm:flex">
                                     <button onClick={createPost}
                                         type="button"
                                         className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none">
