@@ -3,6 +3,8 @@ import {useEffect, useState} from "react";
 import {supabase} from "../supabaseClient";
 import {useCookies} from "react-cookie";
 import {MyCard, OtherCard} from "./card";
+import {useNavigate} from "react-router-dom";
+import ErrorToast from "./ErrorToast";
 
 
 const Chatroom = () => {
@@ -76,7 +78,8 @@ const Chatroom = () => {
 
     async function createPost() {
         if (!content || !username) {
-            alert('Message and username are required.');
+            setToastMessage(`Message and username are required.`);
+            setShowToast(true);
             return;
         } else {
             await supabase.from("chat_room").insert([{
@@ -84,7 +87,6 @@ const Chatroom = () => {
                     room_code: roomCode,
                     message: content,
                     username: username
-
                 }]).single();
             // setMessage({username: message.username, content: ""});
             Init();
@@ -109,23 +111,35 @@ const Chatroom = () => {
         setCookie('name', message.username);
     }
 
+    let navigate = useNavigate();
+
+
+    const exitChat = () => {
+        localStorage.clear();
+        let path = "/";
+        navigate(path);
+    }
+
+
+    // toast handling
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+
+    const handleToastClose = () => {
+        setShowToast(false);
+    };
+
+
     return (
-        <div> {/* <div>
-                <h1>Chat Room - {roomCode}</h1>
-                <div> {
-                    messages.map((message, index) => (
-                        <div key={index}>
-                            {
-                            message.message
-                        }</div>
-                    ))
-                } </div>
-            </div> */}
+        <div>
             <div> {/* component */}
                 <div className="bg-cover h-screen flex flex-col justify-center items-center" loading="lazy"
                     style={
                         {backgroundImage: `url("https://source.unsplash.com/random?dark?night/1600x900")`}
                 }>
+                    <ErrorToast message={toastMessage}
+                        isVisible={showToast}
+                        onClose={handleToastClose}/>
 
                     <h2 className='text-white text-5xl'>Anon Exchange
                     </h2>
@@ -140,11 +154,19 @@ const Chatroom = () => {
                         <div className="flex-1 sm:p-6 justify-between flex flex-col h-[464px] ">
 
                             {/* top header section */}
-                            <div className="flex sm:items-center text-white p-4 md:p-0 justify-between border-b-2 border-gray-100">
+                            <div className="flex items-center text-white p-4 md:p-0 justify-between border-b-2 border-gray-100">
                                 <h1 className='pb-3'>Service status :
                                     <span>
                                         🟢 Online</span>
                                 </h1>
+                                <div onClick={exitChat}
+                                    className="flex flex-row justify-between space-x-3  mb-3 cursor-pointer px-2.5 py-1.5 text-xs font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-800">
+                                    <button className="">Exit Chat</button>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+                                        <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                                    </svg>
+                                </div>
                             </div>
 
                             {/* message section */}

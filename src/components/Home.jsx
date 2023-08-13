@@ -4,6 +4,7 @@ import {useCookies} from 'react-cookie';
 import CreateRoomDialogModel from './dialogModel';
 import {useState, useEffect, useRef} from 'react'
 import JoinRoomDialogModel from "./joinRoomDialog";
+import ErrorToast from "./ErrorToast";
 
 
 const Home = () => {
@@ -58,7 +59,8 @@ const Home = () => {
     // Insere USERNAME e CONTENT dentro da tabela
     async function createPost() {
         if (!content || !username) {
-            alert('Message and username are required.');
+            setToastMessage(`Message and username are required.`);
+            setShowToast(true);
             return;
         } else {
             await supabase.from("profiles").insert([{
@@ -111,19 +113,33 @@ const Home = () => {
     };
 
 
+    // toast handling
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+
+    const handleToastClose = () => {
+        setShowToast(false);
+    };
+
     return (
         <div> {/* component */}
             <div className="bg-cover h-screen flex flex-col justify-center items-center" loading="lazy"
                 style={
                     {backgroundImage: `url("https://source.unsplash.com/random?dark?night/1600x900")`}
             }>
+                <ErrorToast message={toastMessage}
+                    isVisible={showToast}
+                    onClose={handleToastClose}/>
 
 
                 <div id="toast-message-cta" className="w-full fixed flex items-center max-w-xs p-4 space-x-4 text-gray-500 bg-white divide-x divide-gray-200 rounded-lg shadow right-5 bottom-5 dark:text-gray-400 dark:divide-gray-700 space-x dark:bg-gray-800" role="alert">
                     <div className="flex">
+
                         <img className="w-8 h-8 rounded-full shadow-lg" src="https://avatars.dicebear.com/api/adventurer/indian.svg" alt="Jese Leos image"/>
                         <div className="ml-3 text-sm font-normal">
-                            <span className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">Satyam Mishra</span>
+
+                            <span className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
+                                Satyam Mishra</span>
                             <div className="mb-2 text-sm font-normal">Hi, create chat rooms for quick discussions and private messaging.</div>
                             <div className="flex justify-evenly">
                                 <button onClick={handlecreateDialogOpen}
