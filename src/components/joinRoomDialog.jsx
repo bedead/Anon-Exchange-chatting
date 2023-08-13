@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
+import ErrorToast from "./ErrorToast";
 
 
 const JoinRoomDialogModel = ({onClose}) => {
@@ -12,17 +13,32 @@ const JoinRoomDialogModel = ({onClose}) => {
     };
 
     const handleJoinRoom = () => {
-        localStorage.setItem('room_code', roomCode);
+        if (roomCode) {
+            localStorage.setItem('room_code', roomCode);
 
-        let path = `/chat_room/${roomCode}`;
-        navigate(path);
+            let path = `/chat_room/${roomCode}`;
+            navigate(path);
 
-        onClose();
+            onClose();
+        } else {
+            setToastMessage(`Please enter room code.`);
+            setShowToast(true);
+        }
     };
 
+    // toast handling
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+
+    const handleToastClose = () => {
+        setShowToast(false);
+    };
 
     return (
         <div className="fixed left-0 top-0 z-[1055] w-full h-full overflow-y-auto overflow-x-hidden outline-none" tabIndex="-1" aria-labelledby="exampleModalCenterTitle" aria-modal="true" role="dialog">
+            <ErrorToast message={toastMessage}
+                isVisible={showToast}
+                onClose={handleToastClose}/>
             <div className="pointer-events-none relative flex min-h-[calc(100%-1rem)] w-auto translate-y-[-50px] items-center transition-all duration-300 ease-in-out min-[576px]:mx-auto min-[576px]:mt-7 min-[576px]:min-h-[calc(100%-3.5rem)] min-[576px]:max-w-[500px]">
                 <div className="pointer-events-auto relative flex w-full flex-col rounded-2xl bg-opacity-60 backdrop-filter backdrop-blur-lg text-current shadow-lg border-[0.5px] ">
                     <div className="flex flex-shrink-0 items-center justify-between rounded-t-md border-b-2 border-neutral-100 border-opacity-100 p-4 dark:border-opacity-50">
